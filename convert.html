@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+
+    <title>Convert</title>
+  </head>
+  <body>
+    <div class="row">
+      <div class="col">
+        <h1>Convert HTML to Schema!</h1>
+      </div>
+      <div class="col text-right">
+        <button class="btn btn-primary" id="convert_btn">Convert</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <div class="mb-3">
+          <label for="exampleFormControlTextarea1" class="form-label"
+            >Example textarea</label
+          >
+          <textarea class="form-control" id="origin" rows="20"></textarea>
+        </div>
+      </div>
+      <div class="col">
+        <div class="mb-3">
+          <label for="exampleFormControlTextarea1" class="form-label"
+            >Example textarea</label
+          >
+          <textarea class="form-control" id="converted" rows="20"></textarea>
+        </div>
+      </div>
+    </div>
+    <div id="raw_html" style="display: none"></div>
+
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $("#origin").val(`
+          <div id="search" class="yui-form inner-content-top inner-content-search">
+          <div class="yui_form_box clear-fix">
+              <div class="yui_content_box">
+                  <span class="yui_label">申請門店</span>
+                  <div class="hform-date yui_content">
+                      <div class="yui-combobox" data-url="sys/hospital/hospitals" data-name="hospitalId"
+                           data-value-field="id" data-text-field="name" data-place-holder="申請門店">
+                      </div>
+                  </div>
+              </div>
+              <div class="yui_content_box">
+                  <span class="yui_label">製作藥房</span>
+                  <div class="hform-date yui_content">
+                      <div class="yui-combobox" data-url="index/pharmacys" data-name="pharmacyId"
+                           data-value-field="id" data-text-field="name" data-place-holder="製作藥房">
+                      </div>
+                  </div>
+              </div>
+              <div class="yui_content_box">
+                  <span class="yui_label">提交時間</span>
+                  <div class="hform-date yui_content">
+                      <div class="yui-datebox" data-place-holder="日期" data-name="startDate"></div>
+                  </div>
+              </div>
+              <div class="yui_content_box">
+                  <span class="yui_label">到</span>
+                  <div class="hform-date yui_content">
+                      <div class="yui-datebox" data-place-holder="日期" data-name="endDate"></div>
+                  </div>
+              </div>
+          </div>
+          <div class="yui_form_box clear-fix">
+              <div class="yui_content_box">
+                  <span class="yui_label">製作單號</span>
+                  <div class="yui-textbox yui_content" data-name="id" data-place-holder="製作單號"></div>
+              </div>
+              <div class="yui_content_box">
+                  <span class="yui_label">商品名稱</span>
+                  <div class="yui-textbox yui_content" data-name="productName" data-place-holder="商品名稱"></div>
+              </div>
+              <div class="yui_content_box">
+                  <span class="yui_label">審核時間</span>
+                  <div class="hform-date yui_content">
+                      <div class="yui-datebox" data-place-holder="日期" data-name="approveStartDate"></div>
+                  </div>
+              </div>
+              <div class="yui_content_box">
+                  <span class="yui_label">到</span>
+                  <div class="hform-date yui_content">
+                      <div class="yui-datebox" data-place-holder="日期" data-name="approveEndDate"></div>
+                  </div>
+              </div>
+          </div>
+          <div class="yui_form_box clear-fix">
+              <div class="yui_content_box">
+                  <span class="yui_label">狀態</span>
+                  <div class="yui-combobox yui_content" data-name="status" data-source="dict.pharmacy.productMakeStatus" data-place-holder="狀態"></div>
+              </div>
+          </div>
+          <div class="yui_dash_line"></div>
+          <div class="hbtn-group clear-fix">
+              <div class="yui_fl">
+                  <div class="btn btn-icon btn-search icon" onclick="add()">新增</div>
+              </div>
+              <div class="yui_fr">
+                  <div class="btn btn-icon btn-search icon icon-form-search" onclick="doSearch()"></div>
+                  <div class="btn btn-icon btn-search icon icon-form-repeat" onclick="reset()"></div>
+              </div>
+          </div>
+      </div>
+        `);
+      });
+
+      const getClassList = (component) => {
+        const classList = component.attr("class");
+        return classList.split(/\s+/).filter((item) => item !== "yui_content");
+      };
+
+      $("#convert_btn").click(function () {
+        let res = "";
+        $("#raw_html").html($("#origin").val());
+        const $raw = $("#raw_html");
+        const contents = $("#raw_html").find(".yui_content_box");
+        for (let i = 0; i < contents.length; i++) {
+          const $content = $(contents[i]);
+          const $label = $content.find("span.yui_label");
+          let $component = $content.find("div.yui_content");
+          let clsList = getClassList($component);
+          if (clsList.find((e) => e === "hform-date")) {
+            $component = $component.find("div");
+            clsList = getClassList($component);
+          }
+          const source = $component.data("source");
+          const url = $component.data("url");
+          const label = $label.html().trim();
+          const field = $component.data("name");
+          const placeholder = $component.data("place-holder");
+          const url_label = $component.data("text-field");
+          const url_field = $component.data("value-field");
+          if (clsList[0] === "yui-combobox") {
+            if (source) {
+              res += `genSearchSchema('sourceSelect', '${field}', '${label}', {
+                        placeholder: ${
+                          placeholder ? `'${placeholder}'` : "null"
+                        },
+                        options: ${source} as any
+                      }), \n`;
+            } else if (url) {
+              res += `genSearchSchema('apiSelect', '${field}', '${label}', {
+                        placeholder: ${
+                          placeholder ? `'${placeholder}'` : "null"
+                        },
+                        api: async () => {
+                          return await getInOptionFormat('${url}', '${url_field}', '${url_label}')
+                        }
+                      }),\n`;
+            }
+          } else if (clsList[0] === "yui-datebox") {
+            res += `genSearchSchema('datePicker', '${field}', '${label}', {
+              placeholder: ${placeholder ? `'${placeholder}'` : "null"}
+            }), \n`;
+          } else if (clsList[0] === "yui-textbox") {
+            res += `genSearchSchema('input', '${field}', '${label}', {
+              placeholder: ${placeholder ? `'${placeholder}'` : "null"}
+            }), \n`;
+          } else {
+            alert(clsList[0]);
+          }
+        }
+        $("#converted").val(res);
+      });
+    </script>
+  </body>
+</html>
