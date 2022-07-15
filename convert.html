@@ -29,7 +29,7 @@
       <div class="col">
         <div class="mb-3">
           <label for="exampleFormControlTextarea1" class="form-label"
-            >Example textarea</label
+            >Original HTML</label
           >
           <textarea class="form-control" id="origin" rows="20"></textarea>
         </div>
@@ -37,9 +37,10 @@
       <div class="col">
         <div class="mb-3">
           <label for="exampleFormControlTextarea1" class="form-label"
-            >Example textarea</label
+            >Schema</label
           >
-          <textarea class="form-control" id="converted" rows="20"></textarea>
+          <!-- <textarea class="form-control" id="converted" rows="20"></textarea> -->
+          <div id="converted"></div>
         </div>
       </div>
     </div>
@@ -50,85 +51,18 @@
     <!-- Option 1: Bootstrap Bundle with Popper -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
-      $(document).ready(function () {
-        $("#origin").val(`
-          <div id="search" class="yui-form inner-content-top inner-content-search">
-          <div class="yui_form_box clear-fix">
-              <div class="yui_content_box">
-                  <span class="yui_label">申請門店</span>
-                  <div class="hform-date yui_content">
-                      <div class="yui-combobox" data-url="sys/hospital/hospitals" data-name="hospitalId"
-                           data-value-field="id" data-text-field="name" data-place-holder="申請門店">
-                      </div>
-                  </div>
-              </div>
-              <div class="yui_content_box">
-                  <span class="yui_label">製作藥房</span>
-                  <div class="hform-date yui_content">
-                      <div class="yui-combobox" data-url="index/pharmacys" data-name="pharmacyId"
-                           data-value-field="id" data-text-field="name" data-place-holder="製作藥房">
-                      </div>
-                  </div>
-              </div>
-              <div class="yui_content_box">
-                  <span class="yui_label">提交時間</span>
-                  <div class="hform-date yui_content">
-                      <div class="yui-datebox" data-place-holder="日期" data-name="startDate"></div>
-                  </div>
-              </div>
-              <div class="yui_content_box">
-                  <span class="yui_label">到</span>
-                  <div class="hform-date yui_content">
-                      <div class="yui-datebox" data-place-holder="日期" data-name="endDate"></div>
-                  </div>
-              </div>
-          </div>
-          <div class="yui_form_box clear-fix">
-              <div class="yui_content_box">
-                  <span class="yui_label">製作單號</span>
-                  <div class="yui-textbox yui_content" data-name="id" data-place-holder="製作單號"></div>
-              </div>
-              <div class="yui_content_box">
-                  <span class="yui_label">商品名稱</span>
-                  <div class="yui-textbox yui_content" data-name="productName" data-place-holder="商品名稱"></div>
-              </div>
-              <div class="yui_content_box">
-                  <span class="yui_label">審核時間</span>
-                  <div class="hform-date yui_content">
-                      <div class="yui-datebox" data-place-holder="日期" data-name="approveStartDate"></div>
-                  </div>
-              </div>
-              <div class="yui_content_box">
-                  <span class="yui_label">到</span>
-                  <div class="hform-date yui_content">
-                      <div class="yui-datebox" data-place-holder="日期" data-name="approveEndDate"></div>
-                  </div>
-              </div>
-          </div>
-          <div class="yui_form_box clear-fix">
-              <div class="yui_content_box">
-                  <span class="yui_label">狀態</span>
-                  <div class="yui-combobox yui_content" data-name="status" data-source="dict.pharmacy.productMakeStatus" data-place-holder="狀態"></div>
-              </div>
-          </div>
-          <div class="yui_dash_line"></div>
-          <div class="hbtn-group clear-fix">
-              <div class="yui_fl">
-                  <div class="btn btn-icon btn-search icon" onclick="add()">新增</div>
-              </div>
-              <div class="yui_fr">
-                  <div class="btn btn-icon btn-search icon icon-form-search" onclick="doSearch()"></div>
-                  <div class="btn btn-icon btn-search icon icon-form-repeat" onclick="reset()"></div>
-              </div>
-          </div>
-      </div>
-        `);
-      });
-
       const getClassList = (component) => {
         const classList = component.attr("class");
         return classList.split(/\s+/).filter((item) => item !== "yui_content");
       };
+
+      function copyToClipboard(element) {
+        const $temp = $("<input>");
+        $("body").append($temp);
+        $temp.val($(element).text()).select();
+        document.execCommand("copy");
+        $temp.remove();
+      }
 
       $("#convert_btn").click(function () {
         let res = "";
@@ -181,7 +115,8 @@
             alert(clsList[0]);
           }
         }
-        $("#converted").val(res);
+        $("#converted").html(res);
+        copyToClipboard("#converted");
       });
     </script>
   </body>
