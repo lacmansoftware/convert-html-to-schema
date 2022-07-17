@@ -18,10 +18,15 @@
   <body>
     <div class="row">
       <div class="col">
-        <h1>Convert HTML to Schema!</h1>
+        <h1>Smart Converter</h1>
       </div>
       <div class="col text-right">
-        <button class="btn btn-primary" id="convert_btn">Convert</button>
+        <button class="btn btn-primary" id="convert_btn">
+          Convert Search Schema
+        </button>
+        <button class="btn btn-success" id="table_col_btn">
+          Convert Table Column
+        </button>
       </div>
     </div>
 
@@ -37,10 +42,11 @@
       <div class="col">
         <div class="mb-3">
           <label for="exampleFormControlTextarea1" class="form-label"
-            >Schema</label
+            >Converted</label
           >
           <!-- <textarea class="form-control" id="converted" rows="20"></textarea> -->
-          <div id="converted"></div>
+          <p id="converted_alert"></p>
+          <p id="converted"></p>
         </div>
       </div>
     </div>
@@ -66,9 +72,10 @@
 
       $("#convert_btn").click(function () {
         let res = "";
-        $("#raw_html").html($("#origin").val());
-        const $raw = $("#raw_html");
-        const contents = $("#raw_html").find(".yui_content_box");
+        const $raw = $(
+          $.parseHTML("<div>" + $("#origin").val().trim() + "</div>")
+        );
+        const contents = $raw.find(".yui_content_box");
         for (let i = 0; i < contents.length; i++) {
           const $content = $(contents[i]);
           const $label = $content.find("span.yui_label");
@@ -80,7 +87,7 @@
           }
           const source = $component.data("source");
           const url = $component.data("url");
-          const label = $label.html().trim();
+          const label = $label?.html()?.trim();
           const field = $component.data("name");
           const placeholder = $component.data("place-holder");
           const url_label = $component.data("text-field");
@@ -111,12 +118,100 @@
             res += `genSearchSchema('input', '${field}', '${label}', {
               placeholder: ${placeholder ? `'${placeholder}'` : "null"}
             }), \n`;
+          } else if (clsList[0] === "yui-checkbox") {
+            res += `genSearchSchema('checkbox', '${field ?? ""}', '${
+              label ?? ""
+            }', {
+              options: ${source},
+              value: []
+            }), \n`;
+          } else if (clsList[0] === "yui-blockbox") {
+            res += `genSearchSchema('autocomplete', '${field ?? ""}', '${
+              label ?? ""
+            }', {
+              url: '${url}',
+              itemValue: '${url_label}',
+              itemLink: '${url_field}',
+              placeholder: ${placeholder ? `'${placeholder}'` : "null"},
+            }), \n`;
+          } else if (clsList[0] === "yui-filterbox") {
+            res += `genSearchSchema('apiSelect', '${field}', '${label}', {
+                      placeholder: ${placeholder ? `'${placeholder}'` : "null"},
+                      api: async () => {
+                        return await getInOptionFormat('${url}', '${url_field}', '${url_label}')
+                      },
+                      filterable: true
+                    }),\n`;
           } else {
             alert(clsList[0]);
           }
         }
         $("#converted").html(res);
         copyToClipboard("#converted");
+      });
+
+      const replaceInDict = (str) => {
+        let res = str;
+        while (1) {
+          const pos = res.indexOf("dict.getNodeById");
+          if (pos < 0) break;
+          let bracket = res.substring(pos);
+          bracket = bracket.substring(
+            bracket.indexOf("(") + 1,
+            bracket.indexOf(")")
+          );
+          let rightParam = bracket.split(",")[1].trim();
+          if (rightParam.split(".")[0] === "namespace")
+            $("#converted_alert").html(
+              $("#converted_alert").html() + rightParam + "<br/>"
+            );
+          res = res.replace("dict.getNodeById", "inDict");
+          res = res.replace(
+            rightParam,
+            "'" + rightParam.substring(rightParam.indexOf(".") + 1) + "'"
+          );
+        }
+        return res;
+      };
+
+      const replaceEValue = (str) => {
+        let res = str;
+        while (1) {
+          const pos = res.indexOf("e.value");
+          if (pos < 0) break;
+          let bracket = res.substring(0, pos);
+          const fieldMatches = [...bracket.matchAll(/field: (?=\"|\')/g)];
+          bracket = bracket.substring(
+            fieldMatches[fieldMatches.length - 1].index
+          );
+          bracket = bracket.substring(bracket.search(/(?=\"|\')/) + 1);
+          bracket = bracket.substring(0, bracket.search(/(?=\"|\')/));
+          res = res.replace("e.value", "row." + bracket);
+        }
+        return res;
+      };
+
+      $("#table_col_btn").click(function () {
+        let res = $("#origin").val().trim();
+        let startPosition = res.indexOf("setColumns([");
+        res = res.substring(startPosition);
+        startPosition = res.indexOf("[");
+        res = res.substring(startPosition + 1);
+        let endPosition = res.indexOf("]);");
+        res = res.substring(0, endPosition + 4);
+        endPosition = res.lastIndexOf("]");
+        res = res.substring(0, endPosition);
+        res = res.replace(/title: /g, "label: ");
+        res = res.replace(/rerender *: /g, "formatter: ");
+        res = res.replace(/\(e\)/g, "(row)");
+        res = res.replace(/e.row/g, "row");
+        res = res.replace(/ == /g, " === ");
+        res = replaceInDict(res);
+        res = replaceEValue(res);
+        console.log(res);
+        $("#converted").html(res);
+        copyToClipboard("#converted");
+        // console.log(origin.substring(startPosition, endPosition));
       });
     </script>
   </body>
