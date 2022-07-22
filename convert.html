@@ -268,6 +268,7 @@
             const url_field = $component.data("value-field");
             const required = $component.data("required");
             const readonly = $component.data("readonly");
+            const value = $component.data("value");
             let labelWidth = null;
             let span = null;
             if (label?.length > 6) {
@@ -317,6 +318,24 @@
                         ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
                         ${span ? `, span: ${span}` : ""}
                       }),\n`;
+              } else {
+                res += `genFormSchema('sourceSelect', '${field}', '${label}', {
+                        placeholder: ${
+                          placeholder ? `'${placeholder}'` : "null"
+                        },
+                        options: ${source} as any
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${span ? `, span: ${span}` : ""}
+                      }), \n`;
               }
             } else if (clsList[0] === "yui-datebox") {
               res += `genFormSchema('datePicker', '${field}', '${label}', {
