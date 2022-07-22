@@ -30,6 +30,9 @@
         <button class="btn btn-warning" id="btn_form_schema">
           Convert Form Schema
         </button>
+        <button class="btn btn-danger" id="btn_form_schema1">
+          Convert Form Schema
+        </button>
       </div>
     </div>
 
@@ -521,6 +524,318 @@
         }
         $("#converted").html(res);
         copyToClipboard("#converted");
+      });
+      $("#btn_form_schema1").click(function () {
+        let res = "";
+        const $raw = $(
+          $.parseHTML("<div>" + $("#origin").val().trim() + "</div>")
+        );
+        const contents = filterClassStartWith($raw);
+        const db = [
+          "yui-textbox",
+          "yui-checkbox",
+          "yui-decimal",
+          "yui-hidebox",
+          "yui-combobox",
+          "yui-radiobox",
+          "yui-blockbox",
+          "yui-timerangebox",
+          "yui-datebox",
+          "yui-bigtext",
+        ];
+        // const freq = new Map();
+        // db.map((item) => {
+        //   freq.set(item, true);
+        // });
+        // for (let i = 0; i < contents.length; i++) {
+        //   $(contents[i])
+        //     .attr("class")
+        //     .split(" ")
+        //     .filter((item) => {
+        //       return item.match(/\byui-\d*\b/g);
+        //     })
+        //     .map((item) => {
+        //       freq.set(item, true);
+        //     });
+        // }
+        // const result = [];
+        // freq.forEach((value, key) => {
+        //   result.push(key);
+        // });
+        // console.log(result);
+
+        const getLabel = ($component) => {
+          const temp = $component.parent().children()[0];
+          return $(temp).children().length === 0 ? $(temp).html().trim() : "";
+        };
+
+        for (let i = 0; i < contents.length; i++) {
+          const $component = $(contents[i]);
+          const clsList = getClassList($component, "");
+          if (!db.find((item) => item === clsList[0])) {
+            console.log("not found in db", clsList[0]);
+          } else {
+            const label = getLabel($component);
+            const source = $component.data("source");
+            const url = $component.data("url");
+            const field = $component.data("name");
+            const placeholder = $component.data("place-holder");
+            const url_label = $component.data("text-field");
+            const url_field = $component.data("value-field");
+            const required = $component.data("required");
+            const readonly = $component.data("readonly");
+            const value = $component.data("value");
+            let labelWidth = null;
+            let span = null;
+            if (label?.length > 6) {
+              labelWidth = label.length >= 10 ? "250px" : "150px";
+              span = label.length >= 10 ? 18 : null;
+            }
+            clsList[0] === "yui-bigtext" && (span = 24);
+
+            if (clsList[0] === "yui-combobox") {
+              if (source) {
+                res += `genFormSchema('sourceSelect', '${field}', '${label}', {
+                        placeholder: ${
+                          placeholder ? `'${placeholder}'` : "null"
+                        },
+                        options: ${source} as any
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${span ? `, span: ${span}` : ""}
+                      }), \n`;
+              } else if (url) {
+                res += `genFormSchema('apiSelect', '${field}', '${label}', {
+                        placeholder: ${
+                          placeholder ? `'${placeholder}'` : "null"
+                        },
+                        api: async () => {
+                          return await getInOptionFormat('${url}', '${url_field}', '${url_label}')
+                        }
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+                      }),\n`;
+              } else {
+                res += `genFormSchema('sourceSelect', '${field}', '${label}', {
+                        placeholder: ${
+                          placeholder ? `'${placeholder}'` : "null"
+                        },
+                        options: ${source} as any
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${span ? `, span: ${span}` : ""}
+                      }), \n`;
+              }
+            } else if (clsList[0] === "yui-datebox") {
+              res += `genFormSchema('datePicker', '${field}', '${label}', {
+              placeholder: ${placeholder ? `'${placeholder}'` : "null"}
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+            }), \n`;
+            } else if (clsList[0] === "yui-textbox") {
+              res += `genFormSchema('input', '${field}', '${label}', {
+              placeholder: ${placeholder ? `'${placeholder}'` : "null"}
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+            }), \n`;
+            } else if (clsList[0] === "yui-checkbox") {
+              res += `genFormSchema('checkbox', '${field ?? ""}', '${
+                label ?? ""
+              }', {
+              options: ${source},
+              value: []
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+            }), \n`;
+            } else if (clsList[0] === "yui-blockbox") {
+              res += `genFormSchema('autocomplete', '${field ?? ""}', '${
+                label ?? ""
+              }', {
+              url: '${url}',
+              itemValue: '${url_label}',
+              itemLink: '${url_field}',
+              placeholder: ${placeholder ? `'${placeholder}'` : "null"}
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+            }), \n`;
+            } else if (clsList[0] === "yui-filterbox") {
+              res += `genFormSchema('apiSelect', '${field}', '${label}', {
+                      placeholder: ${placeholder ? `'${placeholder}'` : "null"},
+                      api: async () => {
+                        return await getInOptionFormat('${url}', '${url_field}', '${url_label}')
+                      },
+                      filterable: true
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+                    }),\n`;
+            } else if (clsList[0] === "yui-bigtext") {
+              res += `genFormSchema('textarea', '${field}', '${label}', {
+                placeholder: ${placeholder ? `'${placeholder}'` : "null"},
+                span: 24
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+              }), \n`;
+            } else if (clsList[0] === "yui-decimal") {
+              res += `genFormSchema('input', '${field}', '${label}', {
+                placeholder: ${placeholder ? `'${placeholder}'` : "null"}
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+              }), \n`;
+            } else if (clsList[0] === "yui-hidebox") {
+              res += `genFormSchema('hidden', '${field}', '${label}', {
+                placeholder: ${placeholder ? `'${placeholder}'` : "null"}
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+              }), \n`;
+            } else if (clsList[0] === "yui-timerangebox") {
+              res += `genFormSchema('date', '${field}', '${label}', {
+                type: 'datetimerange',
+                placeholder: ${placeholder ? `'${placeholder}'` : "null"}
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+              }), \n`;
+            } else if (clsList[0] === "yui-radiobox") {
+              res += `genFormSchema('radio', '${field ?? ""}', '${
+                label ?? ""
+              }', {
+                options: ${source},
+                value: ""
+                        ${
+                          required === true
+                            ? `, required: ${required === true}`
+                            : ""
+                        }
+                        ${
+                          readonly === true
+                            ? `, readonly: ${readonly === true}`
+                            : ""
+                        }
+                        ${labelWidth ? `, labelWidth: '${labelWidth}'` : ""}
+                        ${span ? `, span: ${span}` : ""}
+              }), \n`;
+            } else {
+              alert(clsList[0]);
+            }
+          }
+          $("#converted").html(res);
+          copyToClipboard("#converted");
+        }
       });
     </script>
   </body>
