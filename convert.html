@@ -65,7 +65,9 @@
     <script>
       const getClassList = (component, str = "yui_content") => {
         const classList = component.attr("class");
-        return classList.split(/\s+/).filter((item) => item !== str);
+        return classList
+          ? classList?.split(/\s+/).filter((item) => item !== str)
+          : [];
       };
 
       const filterClassStartWith = (component) => {
